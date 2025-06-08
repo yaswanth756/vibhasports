@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { CheckCircle, XCircle, Calendar, Clock, MapPin, User, IndianRupee, Shield, Trash2, CalendarDays } from 'lucide-react';
+import { CheckCircle, XCircle, Calendar, Clock, MapPin, User, IndianRupee, Shield, Trash2, Search } from 'lucide-react';
 
 export default function VerificationPanel() {
   const [bookings, setBookings] = useState([]);
@@ -9,6 +9,7 @@ export default function VerificationPanel() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [filter, setFilter] = useState('all'); // all, verified, pending, today
+  const [searchQuery, setSearchQuery] = useState(''); // New state for search query
 
   // Fetch all bookings
   useEffect(() => {
@@ -16,7 +17,7 @@ export default function VerificationPanel() {
       setLoading(true);
       setError('');
       try {
-        const response = await fetch('/api/verify');
+        const response = await fetch('api/verify');
         if (!response.ok) throw new Error('Failed to fetch bookings');
         const data = await response.json();
         setBookings(data);
@@ -66,13 +67,15 @@ export default function VerificationPanel() {
 
   // Filter bookings
   const filteredBookings = bookings.filter((booking) => {
+    const matchesSearch = booking.name.toLowerCase().includes(searchQuery.toLowerCase());
+    if (!matchesSearch) return false;
     if (filter === 'verified') return booking.verified;
     if (filter === 'pending') return !booking.verified;
     if (filter === 'today') return isToday(booking.date);
     return true;
   });
 
-  // Get today's bookings
+  // Get today's bookings for stats
   const todaysBookings = bookings.filter((booking) => isToday(booking.date));
 
   // Stats with fixed revenue calculation
@@ -90,7 +93,6 @@ export default function VerificationPanel() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-2 sm:p-4 overflow-x-hidden">
-      {/* Toast Notification */}
       {(success || error) && (
         <div
           className={`fixed top-4 left-2 right-2 sm:left-4 sm:right-4 max-w-md mx-auto p-3 rounded-lg shadow-lg text-white z-50 ${
@@ -114,9 +116,6 @@ export default function VerificationPanel() {
           </div>
         </div>
 
-        {/* Today's Bookings Highlight */}
-      
-
         {/* Stats Cards */}
         <div className="flex flex-wrap gap-2 sm:gap-3 mb-4">
           <div className="bg-white rounded-xl p-3 shadow-sm flex-1 min-w-[140px]">
@@ -130,7 +129,6 @@ export default function VerificationPanel() {
               </div>
             </div>
           </div>
-
           <div className="bg-white rounded-xl p-3 shadow-sm flex-1 min-w-[140px]">
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 sm:w-8 sm:h-8 bg-green-100 rounded-lg flex items-center justify-center">
@@ -142,7 +140,6 @@ export default function VerificationPanel() {
               </div>
             </div>
           </div>
-
           <div className="bg-white rounded-xl p-3 shadow-sm flex-1 min-w-[140px]">
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 sm:w-8 sm:h-8 bg-orange-100 rounded-lg flex items-center justify-center">
@@ -154,7 +151,6 @@ export default function VerificationPanel() {
               </div>
             </div>
           </div>
-
           <div className="bg-white rounded-xl p-3 shadow-sm flex-1 min-w-[140px]">
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 sm:w-8 sm:h-8 bg-purple-100 rounded-lg flex items-center justify-center">
@@ -168,8 +164,20 @@ export default function VerificationPanel() {
           </div>
         </div>
 
-        {/* Filters */}
+        {/* Search and Filters */}
         <div className="bg-white rounded-xl p-3 mb-4 shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-3">
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search by name..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          </div>
           <div className="flex flex-wrap gap-2">
             <button
               onClick={() => setFilter('all')}
@@ -239,7 +247,7 @@ export default function VerificationPanel() {
             <div className="text-center py-8">
               <Calendar className="w-10 h-10 sm:w-12 sm:h-12 text-gray-400 mx-auto mb-2" />
               <p className="text-gray-500 text-sm sm:text-base">
-                {filter === 'today' ? 'No bookings for today' : 'No bookings found'}
+                {filter === 'today' ? 'No bookings for today' : searchQuery ? 'No bookings match your search' : 'No bookings found'}
               </p>
             </div>
           ) : (
@@ -259,7 +267,6 @@ export default function VerificationPanel() {
                   >
                     <div className="flex flex-col sm:flex-row items-start justify-between min-w-0">
                       <div className="flex-1 min-w-0">
-                        {/* Header */}
                         <div className="flex items-center gap-2 mb-2 flex-wrap">
                           <div className="flex items-center gap-1">
                             <User className="w-3 h-3 sm:w-4 sm:h-4 text-gray-500" />
@@ -277,8 +284,6 @@ export default function VerificationPanel() {
                             {booking.verified ? 'Verified' : isTodayBooking ? 'Today' : 'Pending'}
                           </div>
                         </div>
-
-                        {/* Details */}
                         <div className="flex flex-wrap gap-2 sm:gap-3 mb-2">
                           <div className="flex items-center gap-1.5 min-w-[120px]">
                             <MapPin className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400" />
@@ -303,8 +308,6 @@ export default function VerificationPanel() {
                           </div>
                         </div>
                       </div>
-
-                      {/* Actions */}
                       <div className="flex flex-row gap-1.5 sm:flex-col sm:gap-2 mt-2 sm:mt-0 sm:ml-3">
                         {!booking.verified && (
                           <button
