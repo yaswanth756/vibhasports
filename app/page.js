@@ -28,14 +28,47 @@ export default function BookingPage() {
     return slots;
   };
 
-  // Get current and next day
+  // Get current and next day (today and tomorrow only)
   const getAvailableDates = () => {
+    const dates = [];
+    const today = new Date();
+    
+    for (let i = 0; i < 2; i++) {
+      const date = new Date(today);
+      date.setDate(today.getDate() + i);
+      dates.push(date.toISOString().split('T')[0]);
+    }
+    return dates;
+  };
+
+  // Format date for display
+  const formatDateDisplay = (dateString) => {
+    const date = new Date(dateString);
     const today = new Date();
     const tomorrow = new Date(today);
     tomorrow.setDate(today.getDate() + 1);
-
-    const formatDate = (date) => date.toISOString().split('T')[0];
-    return [formatDate(today), formatDate(tomorrow)];
+    
+    // Reset time for comparison
+    const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const tomorrowOnly = new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate());
+    
+    const dateText = date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+    });
+    
+    if (dateOnly.getTime() === todayOnly.getTime()) {
+      return `Today (${dateText})`;
+    } else if (dateOnly.getTime() === tomorrowOnly.getTime()) {
+      return `Tomorrow (${dateText})`;
+    } else {
+      return date.toLocaleDateString('en-US', {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+      });
+    }
   };
 
   // Initialize with today's date
@@ -195,10 +228,7 @@ export default function BookingPage() {
               <option value="">Select a date</option>
               {availableDates.map((d) => (
                 <option key={d} value={d}>
-                  {new Date(d).toLocaleDateString('en-US', {
-                    weekday: 'short',
-                    day: 'numeric',
-                  })}
+                  {formatDateDisplay(d)}
                 </option>
               ))}
             </select>
